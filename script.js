@@ -3,14 +3,74 @@
 const display = document.querySelector(".calcDisplay");
 let inputOne = "00000000";
 let inputTwo = "00000000";
-let inputOneLock = false;
 let operation = "";
+
+//this boolean tells us if the conditions were met to maintain our first input
+let inputOneLock = false;
+
+//this boolean tells uf if the second input should be locked in
+let inputTwoLock = false;
+
+//this boolean tells us if equals was pressed prior
+let equalsWasPressed = false;
+
+//this boolean tells us if the user, instead of pressing equals, pressed another operator
+let operatorConcat = false;
+
+function rounder(num) {
+    
+    console.log(`operating on ${inputOne} ${operation} ${inputTwo}`);
+    //if actual mathematical overflow
+    if(num > 99999999 || num < -99999999) {
+        return "ERR";
+    }
+
+    if(num >= 0) {
+        if(display.innerText.includes("-")) {
+            display.innerText = display.innerText.substr(1);
+        }
+        //if our number is long because of a decimal
+        if(num.toString().length > 8) {
+            let displayableEight = num.toPrecision(8).toString();
+            return displayableEight;
+        }
+
+        //if our short number is decimal
+        if(num.toString().includes(".")) {
+            return String(num).padEnd(8, "0");
+        }
+
+        else {
+            return String(num).padStart(8, "0");
+        }
+    }
+
+    else {
+        //if our number is long because of a decimal
+        if(num.toString().length > 8) {
+            let displayableEight = num.toPrecision(8).toString();
+            return "-" + displayableEight.substr(1);
+        }
+
+        //if our short number is decimal
+        if(num.toString().includes(".")) {
+            return "-" + num.toString().substr(1).padEnd(8, "0");
+        }
+
+        else {
+            return "-" + num.toString().substr(1).padStart(8, "0");
+        }
+    }
+}
 
 function resetDisplay() {
     display.innerText = "00000000";
     inputOne = "00000000";
     inputTwo = "00000000";
     inputOneLock = false;
+    inputTwoLock = false;
+    equalsWasPressed = false;
+    operatorConcat = false;
 }
 
 function calculate() {
@@ -19,58 +79,110 @@ function calculate() {
     switch(operation) {
         case "×":
             ans = parseInt(inputOne) * parseInt(inputTwo);
+            operation = "";
             break;
         case "÷":
             ans = parseInt(inputOne) / parseInt(inputTwo);
+            operation = "";
             break;
         case "+":
             ans = parseInt(inputOne) + parseInt(inputTwo);
+            operation = "";
             break;
         case "-":
             ans = parseInt(inputOne) - parseInt(inputTwo);
+            operation = "";
             break;
+
+        case "±":
+            if(inputTwoLock) {
+                ans = parseInt(inputTwo) * -1;
+                operation = "";
+            }    
+        
+            if(inputOneLock) {
+                ans = parseInt(inputOne) * -1;
+                operation = "";
+                console.log(ans);
+            }
+            break;
+        
         default:
             ans = inputOne;
     }
-    console.log(ans);
-    //ans = ans.toPrecision(8);
+
+    ans = rounder(ans);
     return ans;
 }
 
 function concatNum(e) {
-    console.log(e.target.innerText);
+    //if equals was pressed last turn, we should reset the display
+    if(equalsWasPressed) {
+        resetDisplay();
+    }
 
-    //if CE is pressed, clear everything
+    //if sign change was pressed
+    if(e.target.innerText==="±") {
+        operation = "±";
+        display.innerText = calculate();
+        if(inputOneLock) inputOne = display.innerText;
+        if(inputTwoLock) inputTwo = display.innerText;
+        return;
+    }
+
+    //if CE is pressed, clear everything and return
     if(e.target.innerText==="CE") {
         resetDisplay();
         return;
     }
 
+    //if equals is pressed, calculate and set equalsWasPressed as true
     if(e.target.innerText==="=") {
         display.innerText = calculate();
+
+        equalsWasPressed = true;
         return;
     }
 
-    //algo to concat the pressed digit on the right
+    //get the pressed number value
     let pressedNum = e.target.innerText;
-    let temp = display.innerText.substring(1, 8);
-    temp = temp + pressedNum;
-    display.innerText = temp;
     
-    if(!inputOneLock) {
-        inputOne = display.innerText;
-    }
-    else {
+    //are we operating on the second number
+    if(operatorConcat && inputOneLock) {
+        display.innerText = "00000000";
+        let temp = display.innerText.substr(1);
+        temp = temp + pressedNum;
+        display.innerText = temp;
         inputTwo = display.innerText;
+        inputTwoLock = true;
+    } 
+    
+    //we are operating on the first number
+    else {
+        let temp = display.innerText.substr(1);
+        temp = temp + pressedNum;
+        display.innerText = temp;
+        inputOne = display.innerText;
+        inputOneLock = true;
     }
+
 }
 
 function operateTime(e) {
-    
-    display.innerText = "00000000";
-    inputOneLock = true;
 
+    //if this is consecutive operator inputs and we locked inputTwo
+    if(operatorConcat && inputTwoLock) {
+        let ans = calculate();
+        display.innerText = ans;
+        inputOne = ans;
+        inputTwoLock = false;
+        console.log(`inputOne: ${inputOne}`);
+    }
+    
+    //get the operator
     operation = e.target.innerText;
+    console.log(operation);
+    operatorConcat = true;
 }
 
 const numbers = document.querySelector(".numerosEnt").querySelectorAll("button");
