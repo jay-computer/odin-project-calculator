@@ -19,7 +19,7 @@ let operatorConcat = false;
 
 function rounder(num) {
     
-    console.log(`operating on ${inputOne} ${operation} ${inputTwo}`);
+    
     //if actual mathematical overflow
     if(num > 99999999 || num < -99999999) {
         return "ERR";
@@ -75,6 +75,26 @@ function resetDisplay() {
 
 function calculate() {
     let ans = 0;
+    console.log(`operating on ${inputOne} ${operation} ${inputTwo}`);
+
+    if(operation.length >= 2) {
+        if(inputTwoLock) {
+            ans = parseInt(inputTwo) * -1;
+            
+            console.log(ans);
+            
+        }    
+
+        else if(inputOneLock) {
+            ans = parseInt(inputOne) * -1;
+            
+            console.log(ans);
+        }
+        ans = rounder(ans);
+        operation = operation[0];
+        return ans;
+        
+    }
 
     switch(operation) {
         case "×":
@@ -94,18 +114,7 @@ function calculate() {
             operation = "";
             break;
 
-        case "±":
-            if(inputTwoLock) {
-                ans = parseInt(inputTwo) * -1;
-                operation = "";
-            }    
         
-            if(inputOneLock) {
-                ans = parseInt(inputOne) * -1;
-                operation = "";
-                console.log(ans);
-            }
-            break;
         
         default:
             ans = inputOne;
@@ -123,10 +132,13 @@ function concatNum(e) {
 
     //if sign change was pressed
     if(e.target.innerText==="±") {
-        operation = "±";
+        operation = operation + "±";
         display.innerText = calculate();
-        if(inputOneLock) inputOne = display.innerText;
         if(inputTwoLock) inputTwo = display.innerText;
+        else if(inputOneLock) inputOne = display.innerText;
+        
+        console.log(inputTwo);
+        console.log(inputTwoLock);
         return;
     }
 
@@ -138,8 +150,9 @@ function concatNum(e) {
 
     //if equals is pressed, calculate and set equalsWasPressed as true
     if(e.target.innerText==="=") {
+        console.log(operation);
         display.innerText = calculate();
-
+        
         equalsWasPressed = true;
         return;
     }
@@ -169,6 +182,9 @@ function concatNum(e) {
 }
 
 function operateTime(e) {
+    if(equalsWasPressed) {
+        resetDisplay();
+    }
 
     //if this is consecutive operator inputs and we locked inputTwo
     if(operatorConcat && inputTwoLock) {
